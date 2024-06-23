@@ -16,7 +16,7 @@ import (
 )
 
 func Migrate() {
-	config.InitEnvConfigs()
+	config.InitEnvConfigs(false)
 	logEntry := fmt.Sprintf("Auto Migrating...")
 
 	dsn := fmt.Sprintf(`%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local`,
@@ -47,9 +47,9 @@ func Migrate() {
 	db.AutoMigrate(
 		&entities.Recipe{},
 		&entities.Ingredient{},
-		&entities.IngredientDetail{},
+		// &entities.IngredientDetail{},
 		&entities.Method{},
-		&entities.MethodDetail{},
+		// &entities.MethodDetail{},
 		&entities.User{},
 		&entities.Rating{},
 		&entities.Discussion{},

@@ -18,7 +18,7 @@ func main() {
 		generate.Migrate()
 
 	} else {
-		config.InitEnvConfigs()
+		config.InitEnvConfigs(false)
 		db := config.InitDB()
 		config.InitLogger(db)
 		route.StartRouting(db)

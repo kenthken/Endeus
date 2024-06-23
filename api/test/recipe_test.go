@@ -9,7 +9,7 @@ import (
 
 func TestCreateRecipe(t *testing.T) {
 
-	config.InitEnvConfigs()
+	config.InitEnvConfigs(true)
 	db := config.InitDB()
 
 	ingredientD := []entities.IngredientDetail{

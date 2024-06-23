@@ -13,33 +13,26 @@ import (
 	"gorm.io/gorm"
 )
 
-type RecipeRepositoryImpl struct {
+type RecipeRepositoryImpl struct { 
 }
 
 // UpdateRecipe implements repositories.RecipeRepository.
 func (r *RecipeRepositoryImpl) UpdateRecipe(db *gorm.DB, req payloads.CreateRecipeRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	var ingredient []entities.Ingredient
-	var ingredientDetail []entities.IngredientDetail
+
 
 	for _, value := range req.Ingredient {
-		for _, detail := range value.IngredientDetail {
-			ingredientDetail = append(ingredientDetail, entities.IngredientDetail{Description: detail.Description})
-		}
-		ingredient = append(ingredient, entities.Ingredient{Title: value.IngredientTitle, Portion: value.Portion, IngredientDetail: ingredientDetail})
+		ingredient = append(ingredient, entities.Ingredient{Title: value.IngredientTitle, Portion: value.Portion})
 	}
 
-	var methodDetail []entities.MethodDetail
 
-	for _, value := range req.Method.MethodDetail {
-		methodDetail = append(methodDetail, entities.MethodDetail{Detail: value.Detail})
-	}
 	//sinii
 
 	method := entities.Method{
 		CookDuration: req.Method.CookDuration,
 		Tips:         req.Method.Tips,
-		MethodDetail: methodDetail,
+
 	}
 
 	recipeEntities := entities.Recipe{
@@ -65,27 +58,18 @@ func (r *RecipeRepositoryImpl) UpdateRecipe(db *gorm.DB, req payloads.CreateReci
 // CreateRecipe implements repositories.RecipeRepository.
 func (r *RecipeRepositoryImpl) CreateRecipe(db *gorm.DB, req payloads.CreateRecipeRequest) (bool, *exceptions.BaseErrorResponse) {
 
-	var ingredientDetail []entities.IngredientDetail
-
 	var ingredient []entities.Ingredient
 
 	for _, value := range req.Ingredient {
-		for _, detail := range value.IngredientDetail {
-			ingredientDetail = append(ingredientDetail, entities.IngredientDetail{Description: detail.Description})
-		}
-		ingredient = append(ingredient, entities.Ingredient{Title: value.IngredientTitle, Portion: value.Portion, IngredientDetail: ingredientDetail})
+		
+		ingredient = append(ingredient, entities.Ingredient{Title: value.IngredientTitle, Portion: value.Portion})
 	}
 
-	var methodDetail []entities.MethodDetail
-
-	for _, value := range req.Method.MethodDetail {
-		methodDetail = append(methodDetail, entities.MethodDetail{Detail: value.Detail})
-	}
 
 	method := entities.Method{
 		CookDuration: req.Method.CookDuration,
 		Tips:         req.Method.Tips,
-		MethodDetail: methodDetail,
+	
 	}
 
 	recipeEntities := entities.Recipe{
@@ -117,19 +101,6 @@ func (r *RecipeRepositoryImpl) DeleteRecipe(db *gorm.DB, ID int) (bool, *excepti
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err.Err,
-		}
-	}
-
-	//delete ingredientD
-
-	ingredientDetail := entities.IngredientDetail{}
-
-	for _, value := range result.Ingredient {
-		if err := db.Where("ingredient_id = ?", value.IngredientId).Delete(ingredientDetail).Error; err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        err,
-			}
 		}
 	}
 
@@ -232,7 +203,7 @@ func (r *RecipeRepositoryImpl) GetListRecipe(db *gorm.DB, pages pagination.Pagin
 
 	err := query.Scopes(pagination.Paginate(&recipe, &pages, query)).Scan(&recipe).Error
 
-	fmt.Print("recipe ", recipe)
+	fmt.Print("recipe\nawdawd", recipe)
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

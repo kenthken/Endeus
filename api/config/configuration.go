@@ -27,15 +27,18 @@ type setupDatabase struct {
 
 var EnvConfigs *setupDatabase
 
-func InitEnvConfigs() {
-	EnvConfigs = SetupConfiguration()
+func InitEnvConfigs(gen bool) {
+	EnvConfigs = SetupConfiguration(gen)
 }
 
-func SetupConfiguration() (config *setupDatabase) {
+func SetupConfiguration(gen bool) (config *setupDatabase) {
 
 	//DB config using viper
-	// viper.AddConfigPath("../../.database")
-	viper.AddConfigPath("./.database")
+	if gen {
+		viper.AddConfigPath("../../../.database")
+	} else {
+		viper.AddConfigPath("./.database")
+	}
 
 	// file name
 	viper.SetConfigName("db")

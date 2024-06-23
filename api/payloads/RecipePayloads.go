@@ -54,28 +54,17 @@ type DiscussionReply struct {
 }
 
 type Ingredient struct {
-	IngredientId     int                 ` json:"ingredient_id"`
-	IngredientTitle  string              ` json:"ingredient_title"`
-	Portion          int                 `json:"portion"`
-	IngredientDetail []*IngredientDetail `gorm:"embedded" json:"ingredient_detail"`
-}
-
-type IngredientDetail struct {
-	IngredientDetailId int    `json:"ingredient_detail_id"`
-	IngredientId       int    ` json:"ingredient_id"`
-	Description        string `json:"description"`
+	IngredientId     int    ` json:"ingredient_id"`
+	IngredientTitle  string ` json:"ingredient_title"`
+	Portion          int    `json:"portion"`
+	IngredientDetail string `json:"ingredient_detail"`
 }
 
 type Method struct {
-	MethodId     int             `json:"method_id"`
-	CookDuration int             `json:"cook_duration"`
-	Tips         string          `json:"tips"`
-	MethodDetail []*MethodDetail `gorm:"embedded" json:"method_detail"`
-}
-
-type MethodDetail struct {
-	MethodDetailId int    `json:"method_detail_id"`
-	Detail         string `json:"detail"`
+	MethodId      int    `json:"method_id"`
+	CookDuration  int    `json:"cook_duration"`
+	Tips          string `json:"tips"`
+	MethodDetails string `json:"method_details"`
 }
 
 type RatingData struct {
