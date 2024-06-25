@@ -13,32 +13,51 @@ import (
 	"gorm.io/gorm"
 )
 
-type RecipeRepositoryImpl struct { 
+type RecipeRepositoryImpl struct {
 }
 
 // UpdateRecipe implements repositories.RecipeRepository.
 func (r *RecipeRepositoryImpl) UpdateRecipe(db *gorm.DB, req payloads.CreateRecipeRequest) (bool, *exceptions.BaseErrorResponse) {
 
-	var ingredient []entities.Ingredient
-
-
 	for _, value := range req.Ingredient {
-		ingredient = append(ingredient, entities.Ingredient{Title: value.IngredientTitle, Portion: value.Portion})
+		ingredient := entities.Ingredient{Title: value.Title, Portion: value.Portion, IngredientId: value.IngredientId, RecipeId: req.RecipeId, IngredientDetail: value.IngredientDetail}
+		fmt.Print("sini?", ingredient)
+		if ingredient.IngredientId != 0 {
+			if err := db.Where(entities.Ingredient{IngredientId: value.IngredientId}).Updates(&ingredient).Error; err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        err,
+				}
+			}
+		} else {
+			if err := db.Save(&ingredient).Error; err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        err,
+				}
+			}
+		}
 	}
 
-
-	//sinii
-
 	method := entities.Method{
-		CookDuration: req.Method.CookDuration,
-		Tips:         req.Method.Tips,
+		MethodId:      req.Method.MethodId,
+		RecipeId:      req.RecipeId,
+		CookDuration:  req.Method.CookDuration,
+		MethodDetails: req.Method.MethodDetails,
+		Tips:          req.Method.Tips,
+	}
 
+	if req.Method.MethodId != 0 {
+		if err := db.Where(entities.Method{MethodId: req.Method.MethodId}).Updates(&method).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
+		}
 	}
 
 	recipeEntities := entities.Recipe{
 		RecipeId:    req.RecipeId,
-		Ingredient:  ingredient,
-		Method:      &method,
 		Title:       req.Title,
 		Description: req.Description,
 		Photo:       []byte(req.Photo),
@@ -61,15 +80,14 @@ func (r *RecipeRepositoryImpl) CreateRecipe(db *gorm.DB, req payloads.CreateReci
 	var ingredient []entities.Ingredient
 
 	for _, value := range req.Ingredient {
-		
-		ingredient = append(ingredient, entities.Ingredient{Title: value.IngredientTitle, Portion: value.Portion})
+
+		ingredient = append(ingredient, entities.Ingredient{Title: value.Title, Portion: value.Portion, IngredientDetail: value.IngredientDetail})
 	}
 
-
 	method := entities.Method{
-		CookDuration: req.Method.CookDuration,
-		Tips:         req.Method.Tips,
-	
+		CookDuration:  req.Method.CookDuration,
+		Tips:          req.Method.Tips,
+		MethodDetails: req.Method.MethodDetails,
 	}
 
 	recipeEntities := entities.Recipe{
@@ -109,17 +127,6 @@ func (r *RecipeRepositoryImpl) DeleteRecipe(db *gorm.DB, ID int) (bool, *excepti
 	ingredient := entities.Ingredient{}
 
 	if err := db.Where("recipe_id = ?", ID).Delete(ingredient).Error; err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        err,
-		}
-	}
-
-	//delete methodD
-
-	methodDetail := entities.MethodDetail{}
-
-	if err := db.Where("method_id = ?", result.Method.MethodId).Delete(methodDetail).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
@@ -192,18 +199,45 @@ func (r *RecipeRepositoryImpl) GetListRecipe(db *gorm.DB, pages pagination.Pagin
 
 	// payloads := []payloads.GetRecipeList{}
 
-	query := db.Model(&recipe).Select("recipe.*,method.*,method_detail.*").
-		Joins("left join method on recipe.recipe_id = method.recipe_id").
-		Joins("left join method_detail on method.method_id = method_detail.method_id").
-		Joins("left join ingredient on recipe.recipe_id = ingredient.recipe_id").
-		Joins("left join ingredient_detail on ingredient.ingredient_id = ingredient_detail.ingredient_id").
-		Joins("left join discussion on recipe.recipe_id = discussion.recipe_id").
-		Joins("left join discussion_reply on discussion.discussion_id = discussion_reply.discussion_id").
-		Joins("left join rating on recipe.recipe_id = rating.recipe_id")
+	// query := db.Model(&recipe).
+	// 	Joins("left join method on recipe.recipe_id = method.recipe_id").
+	// 	Joins("left join ingredient on recipe.recipe_id = ingredient.recipe_id").
+	// 	Joins("left join discussion on recipe.recipe_id = discussion.recipe_id").
+	// 	Joins("left join discussion_reply on discussion.discussion_id = discussion_reply.discussion_id").
+	// 	Joins("left join rating on recipe.recipe_id = rating.recipe_id")
+
+	//GET RECIPE
+	query := db.Model(recipe)
 
 	err := query.Scopes(pagination.Paginate(&recipe, &pages, query)).Scan(&recipe).Error
 
-	fmt.Print("recipe\nawdawd", recipe)
+	//GET INGREDIENT && Method
+	ingredientEntity := entities.Ingredient{}
+	methodEntity := entities.Method{}
+
+	for key, value := range recipe {
+		ingredientResponses := []entities.Ingredient{}
+		methodResponses := entities.Method{}
+		if err := db.Model(ingredientEntity).Where(entities.Ingredient{RecipeId: value.RecipeId}).Scan(&ingredientResponses).Error; err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		if err := db.Model(methodEntity).Where(entities.Method{RecipeId: value.RecipeId}).First(&methodResponses).Error; err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		recipe[key].Ingredient = ingredientResponses
+		recipe[key].Method = &methodResponses
+
+	}
+
+	fmt.Print(recipe)
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -229,7 +263,7 @@ func (r *RecipeRepositoryImpl) GetListRecipe(db *gorm.DB, pages pagination.Pagin
 func (r *RecipeRepositoryImpl) GetRecipeDetail(db *gorm.DB, ID int) (entities.Recipe, *exceptions.BaseErrorResponse) {
 	recipe := entities.Recipe{}
 
-	if err := db.Preload("Method").Preload("Method.MethodDetail").Preload("Ingredient").Preload("Ingredient.IngredientDetail").Preload("Discussion").Preload("Rating").Where("recipe_id = ?", ID).First(&recipe).Error; err != nil {
+	if err := db.Preload("Method").Preload("Ingredient").Preload("Discussion").Preload("Rating").Where("recipe_id = ?", ID).First(&recipe).Error; err != nil {
 		return recipe, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),

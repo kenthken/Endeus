@@ -1,6 +1,6 @@
 module endeus
 
-go 1.23
+go 1.21.1
 
 require github.com/spf13/viper v1.18.2
 

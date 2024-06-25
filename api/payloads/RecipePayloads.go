@@ -1,12 +1,12 @@
 package payloads
 
 type CreateRecipeRequest struct {
-	RecipeId     int    ` json:"recipe_id"`
-	CategoryId   int    ` json:"category_id"`
-	IngredientId int    ` json:"ingredient_id"`
-	MethodId     int    ` json:"method_id"`
-	Title        string ` json:"title"`
-	Ingredient   []*Ingredient
+	RecipeId     int           ` json:"recipe_id"`
+	CategoryId   int           ` json:"category_id"`
+	IngredientId int           ` json:"ingredient_id"`
+	MethodId     int           ` json:"method_id"`
+	Title        string        ` json:"title"`
+	Ingredient   []*Ingredient `json:"ingredient"`
 	Method       *Method
 	Rating       *RatingData
 	Discussion   []*DiscussionData
@@ -55,7 +55,8 @@ type DiscussionReply struct {
 
 type Ingredient struct {
 	IngredientId     int    ` json:"ingredient_id"`
-	IngredientTitle  string ` json:"ingredient_title"`
+	Title            string ` json:"title"`
+	RecipeId         int    `json:"recipe_id"`
 	Portion          int    `json:"portion"`
 	IngredientDetail string `json:"ingredient_detail"`
 }
